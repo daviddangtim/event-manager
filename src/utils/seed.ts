@@ -1,5 +1,5 @@
-import { db } from './config/db';
-import { users, gates } from './db/schema';
+import { db } from '../config/db';
+import { users, gates } from '../db/schema';
 import bcrypt from 'bcrypt';
 
 async function seed() {
