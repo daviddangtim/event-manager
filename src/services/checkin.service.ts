@@ -20,20 +20,25 @@ export class CheckinService {
 
 
   static async processCheckIn(params: {
-    accessCode: string;
+    identifier: string;
+    isQrScan?: boolean;
     gateId: number;
     usherId: string;
     deviceScannedAt?: Date;
     syncSource?: 'online' | 'lan_sync';
   }) {
-    const { accessCode, gateId, usherId, deviceScannedAt = new Date(), syncSource = 'online' } = params;
+    const { identifier, isQrScan = false, gateId, usherId, deviceScannedAt = new Date(), syncSource = 'online' } = params;
 
     return await db.transaction(async (tx) => {
+
+      const condition = isQrScan
+        ? eq(attendees.qrPayload, identifier)
+        : eq(attendees.accessCode, identifier.toUpperCase());
 
       const [attendee] = await tx
         .select()
         .from(attendees)
-        .where(eq(attendees.accessCode, accessCode.toUpperCase()))
+        .where(condition)
         .for('update');
 
       if (!attendee) {
@@ -84,7 +89,8 @@ export class CheckinService {
     const results = [];
     for (const record of records) {
       const res = await this.processCheckIn({
-        accessCode: record.accessCode,
+        identifier: record.identifier,
+        isQrScan: record.isQrScan || false,
         gateId: record.gateId,
         usherId: record.usherId,
         deviceScannedAt: new Date(record.deviceScannedAt),

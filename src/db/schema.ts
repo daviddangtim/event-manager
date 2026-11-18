@@ -39,7 +39,6 @@ export const attendees = pgTable('attendees', {
   phone: varchar('phone', { length: 30 }),
   ticketTier: varchar('ticket_tier', { length: 50 }).default('standard').notNull(),
   
-  // MVP Verification: Short alphanumeric code (e.g., "EVT-94K2")
   accessCode: varchar('access_code', { length: 16 }).notNull().unique(),
   
   qrPayload: text('qr_payload').unique(),
