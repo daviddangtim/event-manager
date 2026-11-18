@@ -3,7 +3,6 @@ import { CheckinService } from '../services/checkin.service';
 // import { broadcastToHallGates } from '../server'; // WebSocket helper
 
 export class CheckinController {
-  // GET /api/checkins/manifest
   static async downloadManifest(req: Request, res: Response, next: NextFunction) {
     try {
       const manifest = await CheckinService.getOfflineManifest();
@@ -19,21 +18,24 @@ export class CheckinController {
 
   static async verifyAttendee(req: Request, res: Response, next: NextFunction) {
     try {
-      const { accessCode, gateId } = req.body;
+      const { accessCode, qrPayload, gateId } = req.body;
       const usherId = req.user!.id; 
+      const identifier = accessCode || qrPayload;
+      const isQrScan = !!qrPayload;
 
-      if (!accessCode || !gateId) {
-        return res.status(400).json({ message: 'accessCode and gateId are required' });
+      if (!identifier || !gateId) {
+        return res.status(400).json({ message: 'Access code or QR payload and gateId are required' });
       }
 
       const outcome = await CheckinService.processCheckIn({
-        accessCode,
+        identifier,
+        isQrScan,
         gateId: Number(gateId),
         usherId,
       });
 
       if (outcome.status === 'INVALID_CODE') {
-        return res.status(404).json({ message: 'Invalid access code.' });
+        return res.status(404).json({ message: 'Invalid ticket or access code.' });
       }
 
       if (outcome.status === 'ALREADY_CHECKED_IN') {
@@ -43,14 +45,6 @@ export class CheckinController {
           gateId: outcome.attendee?.checkedInGateId,
         });
       }
-
-      // Notify the other 4 gates immediately over LAN/WebSocket
-      // broadcastToHallGates({
-      //   type: 'ATTENDEE_CHECKED_IN',
-      //   accessCode: outcome.attendee!.accessCode,
-      //   gateId: Number(gateId),
-      //   checkedInAt: outcome.attendee!.checkedInAt,
-      // });
 
       return res.status(200).json({
         message: 'Access granted.',
