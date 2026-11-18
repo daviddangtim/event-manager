@@ -30,7 +30,6 @@ export class AttendeeController {
   }
 
   static async bulkRegisterAttendees(req: Request, res: Response, next: NextFunction) {
-    // Optional placeholder for bulk CSV uploads
     res.status(501).json({ message: 'Bulk registration coming soon' });
   }
 

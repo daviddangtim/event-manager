@@ -12,11 +12,10 @@ const writeQueue: Array<{
   syncSource: "online" | "lan_sync";
 }> = [];
 
-// Background worker: Flushes queued check-ins from Redis to PostgreSQL every 5 seconds
 setInterval(async () => {
   if (writeQueue.length === 0) return;
   const batch = [...writeQueue];
-  writeQueue.length = 0; // Clear queue safely
+  writeQueue.length = 0; 
 
   try {
     for (const item of batch) {
@@ -50,7 +49,6 @@ setInterval(async () => {
 }, 5000);
 
 export class CheckinService {
-  // Fetch full attendee list for initial offline caching on gate devices / Redis hydration
   static async getOfflineManifest() {
     return await db
       .select({
@@ -97,7 +95,7 @@ export class CheckinService {
   
       const searchKey = `attendee:${targetAccessCode}`;
   
-      // 1. Fast O(1) lookup in Redis
+     
       const cachedAttendee = await redis.hgetall(searchKey);
   
       if (!cachedAttendee || !cachedAttendee.id) {
@@ -111,14 +109,13 @@ export class CheckinService {
         };
       }
   
-      // 2. Immediate atomic update in Redis cache
+    
       await redis.hset(searchKey, {
         isCheckedIn: "1",
         checkedInAt: deviceScannedAt.toISOString(),
         checkedInGateId: gateId.toString(),
       });
   
-      // 3. Publish to Redis Pub/Sub channel so other gates update instantly
       await redisPub.publish(
         "hall-gate-sync",
         JSON.stringify({
@@ -128,7 +125,6 @@ export class CheckinService {
         })
       );
   
-      // 4. Push to write-behind queue for background PostgreSQL persistence
       writeQueue.push({
         attendeeId: cachedAttendee.id,
         gateId,
@@ -148,7 +144,6 @@ export class CheckinService {
       };
     }
 
-  // Batch Sync: Processes offline queues when a gate device reconnects
   static async batchSyncCheckIns(
     records: Array<{
       identifier: string;

@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
 import { CheckinService } from '../services/checkin.service';
-// import { broadcastToHallGates } from '../server'; // WebSocket helper
 
 export class CheckinController {
   static async downloadManifest(req: Request, res: Response, next: NextFunction) {
