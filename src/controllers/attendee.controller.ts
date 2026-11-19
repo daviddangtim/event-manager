@@ -1,5 +1,5 @@
-import { Request, Response, NextFunction } from 'express';
-import { AttendeeService } from '../services/attendee.service';
+import type { Request, Response, NextFunction } from 'express';
+import { AttendeeService } from '../services/attendee.service.ts';
 import crypto from 'crypto';
 
 export class AttendeeController {

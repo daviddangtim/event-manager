@@ -1,5 +1,5 @@
-import { Request, Response, NextFunction } from 'express';
-import jwt, { JwtPayload } from 'jsonwebtoken';
+import type { Request, Response, NextFunction } from 'express';
+import jwt, { type JwtPayload } from 'jsonwebtoken';
 
 export type Role = 'super_admin' | 'registrar' | 'usher';
 

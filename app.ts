@@ -2,10 +2,10 @@ import express from 'express';
 import http from 'http';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import routes from './routes';
+import routes from './src/routes/index.ts';
 // import { errorHandler } from './middlewares/errorHandler';
-import { redisSub } from './config/redis';
-import { hydrateRedisCache } from './utils/cacheHydrator';
+import * as redis from './src/config/redis.ts';
+import { hydrateRedisCache } from './src/utils/cacheHydrator.ts';
 
 dotenv.config();
 
@@ -19,7 +19,7 @@ app.use('/api', routes);
 // app.use(errorHandler);
 
 
-redisSub.subscribe('hall-gate-sync', (err, count) => {
+redis.redisSub.subscribe('hall-gate-sync', (err, count) => {
   if (err) {
     console.error('Failed to subscribe to Redis channel:', err);
   } else {
@@ -27,7 +27,7 @@ redisSub.subscribe('hall-gate-sync', (err, count) => {
   }
 });
 
-redisSub.on('message', (channel, message) => {
+redis.redisSub.on('message', (channel, message) => {
   if (channel === 'hall-gate-sync') {
     const data = JSON.parse(message);
     console.log(`[LAN Sync Event] Access code ${data.accessCode} checked in at Gate ${data.gateId}`);

@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
-import { db } from "../config/db";
-import { attendees, checkinLogs } from "../db/schema";
-import { redis, redisPub } from "../config/redis";
+import { db } from "../config/db.ts";
+import { attendees, checkinLogs } from "../db/schema.ts";
+import { redis, redisPub } from "../config/redis.ts";
 
 // In-memory write-behind queue for asynchronous PostgreSQL batch flushing
 const writeQueue: Array<{

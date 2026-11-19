@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
-import { db } from '../config/db';
-import { users } from '../db/schema';
+import { db } from '../config/db.ts';
+import { users } from '../db/schema.ts';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 

@@ -1,6 +1,6 @@
-import { db } from '../config/db';
-import { attendees } from '../db/schema';
-import { redis } from '../config/redis';
+import { db } from '../config/db.ts';
+import { attendees } from '../db/schema.ts';
+import { redis } from '../config/redis.ts';
 
 export async function hydrateRedisCache() {
   const allAttendees = await db.select().from(attendees);

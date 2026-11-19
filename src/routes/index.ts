@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import authRoutes from './auth.routes';
-import attendeeRoutes from './attendee.routes';
-import checkinRoutes from './checkin.routes';
+import authRoutes from './auth.routes.ts';
+import attendeeRoutes from './attendee.routes.ts';
+import checkinRoutes from './checkin.routes.ts';
 
 const router = Router();
 

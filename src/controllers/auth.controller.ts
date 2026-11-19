@@ -1,5 +1,5 @@
-import { Request, Response, NextFunction } from 'express';
-import { AuthService } from '../services/auth.service';
+import type { Request, Response, NextFunction } from 'express';
+import { AuthService } from '../services/auth.service.ts';
 
 export class AuthController {
   static async login(req: Request, res: Response, next: NextFunction) {

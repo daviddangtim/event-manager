@@ -1,5 +1,5 @@
-import { Request, Response, NextFunction } from 'express';
-import { CheckinService } from '../services/checkin.service';
+import type { Request, Response, NextFunction } from 'express';
+import { CheckinService } from '../services/checkin.service.ts';
 
 export class CheckinController {
   static async downloadManifest(req: Request, res: Response, next: NextFunction) {
