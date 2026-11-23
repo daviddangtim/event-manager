@@ -3,7 +3,7 @@ import http from 'http';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import routes from './src/routes/index.ts';
-// import { errorHandler } from './middlewares/errorHandler';
+import {errorHandler}  from './src/middleware/errorHandler.ts';
 import * as redis from './src/config/redis.ts';
 import { hydrateRedisCache } from './src/utils/cacheHydrator.ts';
 
@@ -16,7 +16,7 @@ app.use(express.json());
 
 app.use('/api', routes);
 
-// app.use(errorHandler);
+app.use(errorHandler);
 
 
 redis.redisSub.subscribe('hall-gate-sync', (err, count) => {

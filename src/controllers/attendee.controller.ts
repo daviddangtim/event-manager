@@ -1,6 +1,12 @@
+import crypto from 'crypto';
 import type { Request, Response, NextFunction } from 'express';
 import { AttendeeService } from '../services/attendee.service.ts';
-import crypto from 'crypto';
+
+const MAX_BULK_BATCH_SIZE = 200;
+
+function generateAccessCode(): string {
+  return `EVT-${crypto.randomBytes(2).toString('hex').toUpperCase()}`;
+}
 
 export class AttendeeController {
   static async registerAttendee(req: Request, res: Response, next: NextFunction) {
@@ -9,7 +15,7 @@ export class AttendeeController {
       const registeredBy = req.user!.id;
 
      // Access code generator
-      const accessCode = `EVT-${crypto.randomBytes(2).toString('hex').toUpperCase()}`;
+      const accessCode = generateAccessCode();
 
       const attendee = await AttendeeService.createAttendee({
         fullName,
@@ -17,6 +23,7 @@ export class AttendeeController {
         phone,
         ticketTier,
         accessCode,
+        qrPayload,
         registeredBy,
       });
 
@@ -30,7 +37,41 @@ export class AttendeeController {
   }
 
   static async bulkRegisterAttendees(req: Request, res: Response, next: NextFunction) {
-    res.status(501).json({ message: 'Bulk registration coming soon' });
+    try {
+      const registeredBy = req.user!.id;
+      const rawAttendees = Array.isArray(req.body) ? req.body : req.body?.attendees;
+
+      if (!Array.isArray(rawAttendees) || rawAttendees.length === 0) {
+        return res.status(400).json({
+          message: 'Provide a non-empty attendees array.',
+        });
+      }
+
+      if (rawAttendees.length > MAX_BULK_BATCH_SIZE) {
+        return res.status(400).json({
+          message: `Batch size cannot exceed ${MAX_BULK_BATCH_SIZE} attendees per request`,
+        });
+      }
+
+      const invalidIndex = rawAttendees.findIndex(
+        (item) => !item || typeof item.fullName !== 'string' || !item.fullName.trim()
+      );
+
+      if (invalidIndex !== -1) {
+        return res.status(400).json({
+          message: `Attendee at index ${invalidIndex} is missing a valid fullName.`,
+        });
+      }
+
+      const usedCodes = new Set<string>();
+      const itemsWithCodes = rawAttendees.map((item) => {
+        let accessCode
+      })
+
+
+    } catch () {
+      
+    }
   }
 
   static async getAllAttendees(req: Request, res: Response, next: NextFunction) {

@@ -1,6 +1,21 @@
+import crypto from 'crypto';
+import  QRCode  from 'qrcode';
 import { db } from '../config/db.ts';
 import { attendees } from '../db/schema.ts';
 import { redis } from '../config/redis.ts';
+
+function buildQrPayload(accessCode: string): string{
+  const secret = process.env.JWT_SECRET
+  const sig = crypto
+    .createHmac('sha256', secret)
+    .update(accessCode)
+    .digest('hex')
+    .slice(0, 12)
+    .toUpperCase();
+
+  
+  return `EVTQR:${accessCode}:${sig}`
+}
 
 export class AttendeeService {
   static async createAttendee(data: {
@@ -13,8 +28,8 @@ export class AttendeeService {
     registeredBy: string;
   }) {
     const normalizedAccessCode = data.accessCode.toUpperCase();
+    const qrPayload = data.qrPayload?.trim() || buildQrPayload(normalizedAccessCode)
 
-    // 1. Insert into PostgreSQL (source of truth)
     const [newAttendee] = await db
       .insert(attendees)
       .values({
@@ -25,9 +40,14 @@ export class AttendeeService {
 
     if (!newAttendee) {
           throw new Error('Failed to create attendee record in database.');
-        }
+    }
 
-    // 2. Sync live Redis cache so immediate check-ins hit memory
+    const qrCodeDataUrl = await QRCode.toDataURL(qrPayload, {
+      errorCorrectionLevel: 'M',
+      margin: 2,
+      width: 300,
+    });
+
     try {
       const key = `attendee:${newAttendee.accessCode}`;
 
@@ -49,7 +69,10 @@ export class AttendeeService {
       console.error('Failed to sync newly registered attendee to Redis:', redisError);
     }
 
-    return newAttendee;
+    return {
+      ...newAttendee,
+    qrCodeDataUrl
+    };
   }
 
   static async getAllAttendees() {
