@@ -3,7 +3,6 @@ import { db } from "../config/db.ts";
 import { attendees, checkinLogs } from "../db/schema.ts";
 import { redis, redisPub } from "../config/redis.ts";
 
-// In-memory write-behind queue for asynchronous PostgreSQL batch flushing
 const writeQueue: Array<{
   attendeeId: string;
   gateId: number;
@@ -64,7 +63,6 @@ export class CheckinService {
       .from(attendees);
   }
 
-  // Live Verification: Uses Redis for microsecond speed and publishes via Pub/Sub
   static async processCheckIn(params: {
       identifier: string; // accessCode or qrPayload
       isQrScan?: boolean;
@@ -84,7 +82,6 @@ export class CheckinService {
   
       let targetAccessCode = identifier.toUpperCase();
   
-      // If it's a QR scan, resolve the qrPayload to the corresponding accessCode using Redis
       if (isQrScan) {
         const mappedCode = await redis.get(`qr_map:${identifier}`);
         if (!mappedCode) {

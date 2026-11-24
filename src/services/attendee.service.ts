@@ -5,7 +5,7 @@ import { attendees } from '../db/schema.ts';
 import { redis } from '../config/redis.ts';
 
 function buildQrPayload(accessCode: string): string{
-  const secret = process.env.JWT_SECRET
+  const secret = process.env.JWT_SECRET!
   const sig = crypto
     .createHmac('sha256', secret)
     .update(accessCode)
@@ -73,6 +73,76 @@ export class AttendeeService {
       ...newAttendee,
     qrCodeDataUrl
     };
+  }
+
+  static async createBulkAttendees(
+    items: Array<{
+      fullName: string;
+      email?: string;
+      phone?: string;
+      ticketTier?: string;
+      accessCode: string;
+      qrPayload?: string | null;
+      registeredBy: string;
+    }>
+  ) {
+    const rowsToInsert = items.map((item) => {
+      const normalizedAccessCode = item.accessCode.toUpperCase();
+      const qrPayload = item.qrPayload?.trim() || buildQrPayload(normalizedAccessCode);
+
+      return {
+        fullName: item.fullName.trim(),
+        email: item.email?.trim() || null,
+        phone: item.phone?.trim() || null,
+        ticketTier: item.ticketTier?.trim() || 'standard',
+        accessCode: normalizedAccessCode,
+        qrPayload,
+        registeredBy: item.registeredBy,
+      };
+    });
+
+    const insertedAttendees = await db
+      .insert(attendees)
+      .values(rowsToInsert)
+      .returning();
+
+    const results = await Promise.all(
+      insertedAttendees.map(async (row) => {
+        const payloadForQr = row.qrPayload || buildQrPayload(row.accessCode);
+        const qrCodeDataUrl = await QRCode.toDataURL(payloadForQr, {
+          errorCorrectionLevel: 'M',
+          margin: 2,
+          width:300,
+        });  
+      })
+    );
+
+    try {
+      const pipeline = redis.pipeline();
+
+      for (const attendee of insertedAttendees) {
+        const key = `attendee:${attendee.accessCode}`
+        pipeline.hset(key, {
+          id: attendee.id,
+          fullName: attendee.fullName,
+          ticketTier: attendee.ticketTier,
+          accessCode: attendee.accessCode,
+          qrPayload: attendee.qrPayload || '',
+          isCheckedIn: attendee.isCheckedIn ? '1' : '0',
+          checkedInAt: attendee.checkedInAt ? attendee.checkedInAt.toISOString() : '',
+          checkedInGateId: attendee.checkedInGateId ? attendee.checkedInGateId.toString() : '',
+        });
+
+        if (attendee.qrPayload) {
+          pipeline.set(`qr_map:${attendee.qrPayload}`, attendee.accessCode);
+        }
+      }
+
+      await pipeline.exec();
+    } catch (redisError) {
+      console.error('Failed to pipeline bulk attendees into Redis:', redisError);
+    }
+    return results; 
   }
 
   static async getAllAttendees() {

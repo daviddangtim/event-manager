@@ -18,7 +18,12 @@ export async function hydrateRedisCache() {
       checkedInAt: attendee.checkedInAt ? attendee.checkedInAt.toISOString() : '',
       checkedInGateId: attendee.checkedInGateId ? attendee.checkedInGateId.toString() : '',
     });
+
+    if (attendee.qrPayload) {
+      await redis.set(`qr_map:${attendee.qrPayload}`, attendee.accessCode);
+    }
   }
+  
   await pipeline.exec();
   console.log(`Hydrated Redis cache with ${allAttendees.length} attendees.`);
 }

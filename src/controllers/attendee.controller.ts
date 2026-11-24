@@ -1,6 +1,8 @@
 import crypto from 'crypto';
 import type { Request, Response, NextFunction } from 'express';
 import { AttendeeService } from '../services/attendee.service.ts';
+import { ne } from 'drizzle-orm';
+import { attendees } from '../db/schema.ts';
 
 const MAX_BULK_BATCH_SIZE = 200;
 
@@ -11,7 +13,7 @@ function generateAccessCode(): string {
 export class AttendeeController {
   static async registerAttendee(req: Request, res: Response, next: NextFunction) {
     try {
-      const { fullName, email, phone, ticketTier } = req.body;
+      const { fullName, email, phone, ticketTier, qrPayload } = req.body;
       const registeredBy = req.user!.id;
 
      // Access code generator
@@ -65,12 +67,28 @@ export class AttendeeController {
 
       const usedCodes = new Set<string>();
       const itemsWithCodes = rawAttendees.map((item) => {
-        let accessCode
-      })
+        let accessCode = generateAccessCode();
+        while (usedCodes.has(accessCode)) {
+          accessCode = generateAccessCode();
+        }
+        usedCodes.add(accessCode);
+        return {
+          ...item,
+          accessCode,
+          registeredBy,
+        };
+      });
 
+      const createdAttendees = await AttendeeService.createBulkAttendees(itemsWithCodes);
 
-    } catch () {
-      
+      res.status(201).json({
+        message: `${createdAttendees.length} attendees pre-registered successfully`,
+        count: createdAttendees.length,
+        attendees: createdAttendees,
+      });
+
+    } catch (error) {
+      next(error)
     }
   }
 
