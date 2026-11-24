@@ -7,7 +7,6 @@ const router = Router();
 
 router.use(authenticate);
 
-// Only Super Admins and Registrars can pre-register attendees
 router.post(
   '/',
   authorizeRoles('super_admin', 'registrar'),

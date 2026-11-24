@@ -14,7 +14,7 @@ router.get(
 
 router.post(
   '/verify',
-  authorizeRoles('super_admin', 'usher'),
+  authorizeRoles('super_admin','registrar', 'usher'),
   CheckinController.verifyAttendee
 );
 
