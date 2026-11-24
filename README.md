@@ -18,7 +18,7 @@ npm run dev                 # starts the server
 
 When the server prints `Event Hall API Server running on port 4000`, it's ready. On startup it loads all attendee data from PostgreSQL into Redis, so check-ins are fast.
 
-**Development login** (don't use in production):
+**Development login**:
 - Email: `admin@event.com`
 - Password: `password123`
 - Role: `super_admin`
