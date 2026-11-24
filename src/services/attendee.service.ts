@@ -35,6 +35,7 @@ export class AttendeeService {
       .values({
         ...data,
         accessCode: normalizedAccessCode,
+        qrPayload,
       })
       .returning();
 
@@ -114,6 +115,10 @@ export class AttendeeService {
           margin: 2,
           width:300,
         });  
+        return {
+          ...row,
+          qrCodeDataUrl,
+        }
       })
     );
 
