@@ -1,6 +1,7 @@
 import express from 'express';
 import http from 'http';
 import cors from 'cors';
+import morgan from 'morgan';
 import dotenv from 'dotenv';
 import routes from './src/routes/index.ts';
 import {errorHandler}  from './src/middleware/errorHandler.ts';
@@ -12,6 +13,9 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 app.use(cors());
+
+app.use(morgan('dev'))
+
 app.use(express.json());
 
 app.use('/api', routes);
